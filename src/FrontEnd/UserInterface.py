@@ -2,13 +2,28 @@ from PyQt6.QtWidgets import QMainWindow,QListView, QApplication, QPushButton, QW
 from PyQt6.QtGui import QPalette, QColor, QGuiApplication
 from PyQt6.QtCore import QDir, QRect, Qt,QSize
 from PyQt6.QtGui import QIcon, QPixmap, QFont
-from tkinter.filedialog import askdirectory
+from tkinter.filedialog import askdirectory, askopenfilename
+import tkinter as tk
+#import tensorflow as tf
+#import tensorflow as tf
+from keras.layers import Dense
+from keras.models import Sequential
+from tensorflow.keras.models import load_model
+#from tensorflow import keras
+#from keras.layers import Dense
+import matplotlib.pyplot as plt
+import numpy as np
+import PIL
+#from tensorflow.keras.layers import Rescaling
+#from tensorflow.keras import layers
+#from tensorflow.keras.models import load_model#Sequential, load_model
+#from tensorflow.keras import backend
+import pathlib
 from PIL import Image, ImageQt
+from tensorflow.keras.preprocessing import image
 import sys
 import random
-
 import glob
-
 import os
 
 #include <QRect>
@@ -26,6 +41,7 @@ class MainWindow(QMainWindow):
         x_pos = 0
         y_pos = 0
         self.setGeometry(x_pos, y_pos, screen_width, screen_height)
+        #self.root=tk.Tk()
         
 
 
@@ -62,7 +78,7 @@ class MainWindow(QMainWindow):
                 self.findImageLayout=QHBoxLayout()
 
                 self.imageListView=QListWidget()
-                self.imageListView.setIconSize(QSize(104,104))
+                self.imageListView.setIconSize(QSize(416,416))
                 self.importButton=QPushButton("Import images")
                 self.importButton.setMinimumSize(200,150)
                 self.importButton.pressed.connect(self.importImages)
@@ -170,7 +186,10 @@ class MainWindow(QMainWindow):
     
     def changeToImportDataSet(self):
         #print('hi')
-        self.mainLayout.setCurrentIndex(3)
+        self.keras=askopenfilename(filetypes=[("Keras Files","*.h5")])
+        print(self.keras)
+        self.loaded_model = load_model(self.keras)
+        #self.mainLayout.setCurrentIndex(3)
 
     def changeToMainMenu(self):
         self.mainLayout.setCurrentIndex(0)
@@ -180,21 +199,55 @@ class MainWindow(QMainWindow):
         self.image_list = []
         self.imageNameList=[]
         print(folderPath)
-        for filename in glob.glob(folderPath+'/*.jpg'): #assuming gif
-            print(filename)
+        for filename in glob.glob(folderPath+'/*.jpg'): #assuming gif        
+            filename=str(pathlib.PureWindowsPath(filename).as_posix())
+            picture = Image.open(filename)
+            self.image_list.append(picture)
             self.imageNameList.append(filename)
-            im=Image.open(filename)
-            self.image_list.append(im)
-            im.thumbnail((104,104),Image.Resampling.LANCZOS)
-            icon=QIcon(QPixmap.fromImage(ImageQt.ImageQt(im)))
-            item=QListWidgetItem(filename,self.imageListView)
+            picture.thumbnail((416, 416), Image.LANCZOS)
+            icon = QIcon(QPixmap(filename))#QIcon(QPixmap.fromImage(ImageQt.ImageQt(picture)))
+            item = QListWidgetItem(os.path.basename(filename)[:20] + "...", self.imageListView)
             item.setStatusTip(filename)
             item.setIcon(icon)
-        print(self.image_list)
+            #print(filename)
+            #self.imageNameList.append(filename)
+            #im=Image.open(filename)
+            #self.image_list.append(im)
+            #im.thumbnail((72,72),Image.Resampling.LANCZOS)
+            #icon=QIcon(QPixmap.fromImage(ImageQt.ImageQt(im)))
+            #item=QListWidgetItem(filename,self.imageListView)
+            #item.setStatusTip(filename)
+            #item.setIcon(icon)
+        #print(self.imageNameList)
+        #self.root.mainloop()
         #self.imageListView.addItems(self.imageNameList)
+        #self.image_list = image.img_to_array(img)
+        #self.image_list = np.expand_dims(img_array, axis=0)
+        #self.image_list/=255.0
 
     def classify(self):
         print("Classify")
+        for i in self.imageNameList:
+            img = image.load_img(i, target_size=(416, 416)) 
+            img_array = image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0)
+            
+            #img_array /= 255.0  # Normalize the image pixel values
+
+            predictions=self.loaded_model.predict(img_array)
+            print("Source Image: "+i)
+            print("Predicted Probabilites:")
+            print(predictions)
+            predicted_class_index = np.argmax(predictions)
+            if(predicted_class_index==0):
+                print("Predicted Class: Clean")
+            
+            else:
+                print("Predicted Class: Dirty")
+            
+            #print("Predicted Class Index:", predicted_class_index)
+
+
         self.mainLayout.setCurrentIndex(2)
 
     #def pictureDropped(self, imageList,imageNameList):
