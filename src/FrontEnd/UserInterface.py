@@ -11,7 +11,7 @@ from keras.models import Sequential
 from tensorflow.keras.models import load_model
 #from tensorflow import keras
 #from keras.layers import Dense
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import PIL
 #from tensorflow.keras.layers import Rescaling
@@ -41,15 +41,18 @@ class MainWindow(QMainWindow):
         x_pos = 0
         y_pos = 0
         self.setGeometry(x_pos, y_pos, screen_width, screen_height)
+        self.showMaximized()
         #self.root=tk.Tk()
         
 
 
         #self.stacklayout = QStackedLayout()
         if(1):
+            
             #mainLayout=QGridLayout()
             self.mainLayout=QStackedLayout()
             if(1):
+                
                 self.buttonLayout=QHBoxLayout()
                 #self.setFixedHeight(300)
                 self.button1 = QPushButton("Import Trash")
@@ -70,6 +73,8 @@ class MainWindow(QMainWindow):
                 buttonLayoutSize=QRect(50,100,50,100)
                 self.buttonLayout.setContentsMargins(100,10,100,10)
                 self.buttonLayout.setGeometry(buttonLayoutSize)
+                self.button1.setStyleSheet('QPushButton {background-color: #A3C1DA; color: black;}')
+                self.button2.setStyleSheet('QPushButton {background-color: #A3C1DA; color: black;}')
             #w=WidgetButton()
         #mainLayout.addLayout(self.stacklayout)
             if(1):
@@ -82,11 +87,14 @@ class MainWindow(QMainWindow):
                 self.importButton=QPushButton("Import images")
                 self.importButton.setMinimumSize(200,150)
                 self.importButton.pressed.connect(self.importImages)
-
+                self.importButton.setStyleSheet('QPushButton {background-color: #A3C1DA; color: black;}')
+                self.imageListView.setStyleSheet('QPushButton {background-color: #A3C1DA; color: black;}')
+                
                 self.findButton=QPushButton("Find Trash")
                 self.findButton.setMinimumSize(50,100)
                 self.findButton.setMaximumSize(500,100)
                 self.findButton.pressed.connect(self.classify)
+                self.findButton.setStyleSheet('QPushButton {background-color: #A3C1DA; color: black;}')
 
                 self.importImageListLayout.addWidget(self.importButton)
                 self.importImageListLayout.addWidget(self.imageListView)
@@ -103,12 +111,16 @@ class MainWindow(QMainWindow):
 
             if(1):
                 self.resultsLayout=QVBoxLayout()
-
+                widgetFont = QFont()
+                widgetFont.setWeight(40)
+                widgetFont.setPointSize(24)
                 self.resultsSubLayout=QHBoxLayout()
                 self.resultsListView=QListWidget()
-                self.originalListView=QListWidget()
+                #self.originalListView=QListWidget()
+                self.resultsListView.setIconSize(QSize(416,416))
                 self.resultsSubLayout.addWidget(self.resultsListView)
-                self.resultsSubLayout.addWidget(self.originalListView)
+                self.resultsListView.setFont(widgetFont)
+                #self.resultsSubLayout.addWidget(self.originalListView)
                 self.resultsLayout.setSpacing(100)
                 self.importImageLayout.setContentsMargins(100,10,100,10)
                 tempWidget3=QWidget()
@@ -233,7 +245,10 @@ class MainWindow(QMainWindow):
             img_array = np.expand_dims(img_array, axis=0)
             
             #img_array /= 255.0  # Normalize the image pixel values
-
+            icon = QIcon(QPixmap(i))#QIcon(QPixmap.fromImage(ImageQt.ImageQt(picture)))
+            widgetFont = QFont()
+            widgetFont.setWeight(40)
+            widgetFont.setPointSize(24)
             predictions=self.loaded_model.predict(img_array)
             print("Source Image: "+i)
             print("Predicted Probabilites:")
@@ -241,10 +256,19 @@ class MainWindow(QMainWindow):
             predicted_class_index = np.argmax(predictions)
             if(predicted_class_index==0):
                 print("Predicted Class: Clean")
-            
+                item = QListWidgetItem("Predicted Class: Clean \n"+i, self.resultsListView)
+                item.setFont(widgetFont)
             else:
                 print("Predicted Class: Dirty")
+                item = QListWidgetItem("Predicted Class: Dirty \n"+i, self.resultsListView)
+                item.setFont(widgetFont)
+                
+
+
             
+            item.setStatusTip(i)
+            item.setIcon(icon)
+            #self.resultsListView
             #print("Predicted Class Index:", predicted_class_index)
 
 
@@ -301,8 +325,11 @@ stylesheet = """
     }
 """
 
-
+custom_font = QFont()
+custom_font.setWeight(26);
+#QApplication.setFont(custom_font, "QLabel")
 app = QApplication(sys.argv)
+app.setFont(custom_font)
 app.setStyleSheet(stylesheet)
 w = MainWindow()
 w.show()
